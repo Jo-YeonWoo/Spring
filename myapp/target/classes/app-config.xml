@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mybatis-spring="http://mybatis.org/schema/mybatis-spring"
+	xmlns:encryption="http://www.jasypt.org/schema/encryption"
+	xsi:schemaLocation="http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc-4.3.xsd
+		http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://mybatis.org/schema/mybatis-spring http://mybatis.org/schema/mybatis-spring-1.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.jasypt.org/schema/encryption http://www.jasypt.org/schema/encryption/jasypt-spring31-encryption-1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<!--
+	<bean id="helloService" class="com.kg.myapp.HelloService" />
+	<bean id="helloServicee" class="com.kg.myapp.HelloServicee" />
+	<bean id="helloController" class="com.kg.myapp.HelloController">
+		<constructor-arg ref="helloServicee" />
+		<!- constructor 매개변수에 helloService를 넣어 줌 ->
+	</bean>
+	-->
+	
+	<!-- 찍은 패키지 안에 있는 것들 중에 @가 붙어 있는 것들 모두 객체화 -->
+	<context:component-scan base-package="com.kg.myapp" />
+	<context:component-scan base-package="com.kg.myapp.*" />
+	
+	<!-- aop -->
+	<aop:aspectj-autoproxy />
+	<!--
+	<aop:config>	<!- aop에 관련된 코드 작성을 위한 시작 태그 ->
+		<aop:pointcut expression="execution(* com.kg.myapp.hello.HelloService.sayHello(..))" id="printTime" />
+		<!- pointcut : 걸려고 하는 시점 ->
+		<!- expression : 실행 시점 즉, 코드를 걸 곳 | 메소드가 될 수도, 클래스가 될 수도, 패키지가 될 수도 있음 (패키지 : 패키지 안의 모든 메서드 코드에 다 걸릴 것) ->
+		<!- execution : 메소드에 코드를 걸 것 | * : 리턴 타입(ex) String : java.lang.String) | (..) : 매개변수[.. - 생략 가능/다 가지고 오겠단 뜻/*과 같은 의미] ->
+		<aop:aspect ref="helloTime">	<!- 걸려는 것 | 기능 ->
+			<aop:before pointcut-ref="printTime" method="timeLog" />
+			<!- after : 후에 / after-returning : 에러가 뜨지 않고 리턴이 됐을 때만 / after-thorwing : 에러가 떴을 때만 / around : 메소드를 둘러 쌈 / before : 이전에 걸 것 ->
+			<!- helloTime의 timeLog 이용 ->
+		</aop:aspect>
+	</aop:config>
+	
+	<aop:config>
+		<!- <aop:pointcut expression="within(com.kg.myapp.bye.ByeController)" id="printTime2" />  ->
+		<aop:pointcut expression="execution(* com.kg.myapp.bye.ByeController.sayBye(..))" id="printTime2" />
+		<aop:aspect ref="byeTime">
+			<aop:after pointcut-ref="printTime2" method="timeLog" />
+		</aop:aspect>
+	</aop:config>
+	 <aop:config>
+	 	<aop:pointcut expression="execution(* com..HelloService.sayHello(..))" id="printTime"/>
+	 	<aop:aspect ref="timeTracer">
+	 		<aop:around pointcut-ref="printTime" method="trace"/>
+	 	</aop:aspect>
+	 </aop:config>
+	  -->
+	  
+	<!-- <context:property-placeholder location="classpath:db/jdbc.properties" />  -->
+	<bean id="propertyConfigurer" class="org.jasypt.spring31.properties.EncryptablePropertyPlaceholderConfigurer">
+		<constructor-arg ref="configurationEncryptor" />
+	  	<property name="locations">
+	  		<list>
+	  			<value>classpath:/db/jdbc.properties</value>
+	  		</list>
+	  	</property>
+	  </bean>
+	  
+	  <bean id="configurationEncryptor" class="org.jasypt.encryption.pbe.StandardPBEStringEncryptor">
+	  	<property name="config" ref="environmentVariableConfiguration" />	<!-- 암호를 만드는 알고리즘을 만들어 주는 Bean -->
+	  	<property name="password" value="abc" />
+	  </bean>
+	  
+	  <bean id="environmentVariableConfiguration" class="org.jasypt.encryption.pbe.config.EnvironmentStringPBEConfig">
+	  	<property name="algorithm" value="PBEWithMD5AndDES" />
+	  	<property name="passwordEnvName" value="APP_ENCRYPTION_PASSWORD" />
+	  </bean>
+	  
+	  <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+	  	<property name="driverClassName" value="${jdbc.driverClassName}" />
+	  	<property name="url" value="${jdbc.url}" />
+	  	<property name="username" value="${jdbc.username}" />
+	  	<property name="password" value="${jdbc.password}" />
+	  </bean>
+	  
+	  <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+	  	<property name="dataSource" ref="dataSource" />
+	  </bean>
+	  
+	  <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	  	<property name="dataSource" ref="dataSource" />
+	  </bean>
+	  
+	  <tx:advice id="txAdvice" transaction-manager="transactionManager">
+	  	<tx:attributes>
+	  		<tx:method name="get*" read-only="true" />
+	  		<tx:method name="select*" read-only="true" />
+	  		<tx:method name="*" />
+	  		<!-- get으로 시작하거나 select로 시작하는 것들은 간섭하지 않고 읽기만 하며
+	  		나머지는 모두 트랜잭션을 걸겠다는 뜻 -->
+	  	</tx:attributes>
+	  </tx:advice>
+	  <aop:config>
+	  	<aop:pointcut expression="execution(* com..*Service.*teEmp(..))" id="txPointcut" />
+	  	<aop:advisor advice-ref="txAdvice" pointcut-ref="txPointcut" />
+	  </aop:config>
+	  
+	  <bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="defaultEncoding" value="UTF-8" />
+		<property name="basenames">
+			<list>
+				<value>classpath:i18n/emp</value>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- MyBatis -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="mapperLocations" value="classpath:/com/kg/myapp/**/*.xml" />
+	</bean>
+	
+	<mybatis-spring:scan base-package="com.kg.myapp.dao" />
+	
+	<!-- BCryptPasswordEncoder -->
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+
+</beans>
+
+<!--
+//HTML : 태그의 형식이 정해져 있음
+//XML : 태그를 사용하나 형식이 정해져 있지 않음 데이터를 전송하는 용도로 사용함
+		& JAVA 코드임
+ -->

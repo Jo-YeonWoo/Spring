@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kg.myapp.dao.IMemberRepository">
+	<insert id="insertMember" parameterType="com.kg.myapp.vo.MemberVO">
+		<if test="picture != null">
+			insert into emp_users values(#{userid}, {#password}, #{name}, #{tel}, 
+			#{picture}, #{pictureSize})
+		</if>
+		<if test="picture == null">
+			insert into emp_users values(#{userid}, {#password}, #{name}, #{tel}, 
+			null, null)
+		</if>
+	</insert>
+	
+	<select id="getPassword" parameterType="string" resultType="string">
+		select password from emp_users where userid=#{userid}
+	</select>
+	
+	<select id="getMember" parameterType="string" resultType="com.kg.myapp.vo.MemberVO">
+		select userid, password, name, tel, picture, picture_size as pictureSize 
+		from emp_users where userid=#{userid}
+	</select>
+	
+	<select id="idCheck" parameterType="string" resultType="int">
+		select count(*) from emp_users where userid = #{userid}
+	</select>
+</mapper>
